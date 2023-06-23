@@ -1,80 +1,134 @@
-from tkinter import *
+import tkinter as tk
 
-root = Tk()
+LIGHT_GRAY = "#F5F5F5"
+LABEL_COLOR = "#25265E"
+WHITE = "#FFFFFF"
+OFF_WHITE = "#F8FAFF"
+LIGHT_BLUE = "#CCEDFF"
+
+DIGIT_FONT_STYLE = ("Arial", 24, "bold")
+SMALL_FONT_STYLE = ("Arial", 16)
+LARGE_FONT_STYLE = ("Arial", 40, "bold")
+DEFAULT_FONT_STYLE = ("Arial", 20)
+
+root = tk.Tk()
 root.title("Calculator")
+root.geometry("375x667")
+root.resizable(0,0)
 
-output_frame = Frame(root, height=50, width=380, bg="white")
-output_frame.pack(side=TOP)
-digit_frame = Frame(root, width=380, bg="white")
-digit_frame.pack(side=BOTTOM)
+output_frame = tk.Frame(root, height=221, bg=LIGHT_GRAY)
+output_frame.pack(expand=True, fill="both")
+digit_frame = tk.Frame(root)
+digit_frame.pack(expand=True, fill="both")
 
-output = Label(output_frame, text="0", font=("Arial", 20), width=20, anchor="e", height=2)
+digit_frame.rowconfigure(0, weight=1)
+for x in range(1,5):
+    digit_frame.rowconfigure(x, weight=1)
+    digit_frame.columnconfigure(x, weight=1)
 
-#adding functions to buttons
+#output expressions
+total_expression = "0"
+current_expression = "0"
+
+total_label = tk.Label(output_frame, text=total_expression, anchor=tk.E, bg=LIGHT_GRAY, fg=LABEL_COLOR, padx=24, font=SMALL_FONT_STYLE)
+total_label.pack(expand=True, fill="both")
+
+current_label = tk.Label(output_frame, text=total_expression, anchor=tk.E, bg=LIGHT_GRAY, fg=LABEL_COLOR, padx=24, font=LARGE_FONT_STYLE)
+current_label.pack(expand=True, fill="both")
+
+def update_total_label():
+    expression = total_expression
+
+    for operator,symbol in operations.items():
+        expression = expression.replace(operator, f' {symbol} ')
+
+    total_label.config(text=expression)
+
+def update_current_label():
+    current_label.config(text=current_expression[:11])
+
+def add_to_expression(value):
+    global current_expression
+    if current_expression != '0':
+        current_expression += str(value)
+    else:
+        current_expression = str(value)
+    update_current_label()
+
+def append_operator(operator):
+    global current_expression, total_expression
+
+    current_expression += operator
+    if total_expression != '0':
+        total_expression += current_expression
+    else:
+        total_expression = current_expression
+
+    current_expression = "0"
+    update_total_label()
+    update_current_label()
+
 def clear():
-    output.config(text="0")
-    output.update()
+    global total_expression, current_expression
+    current_expression = "0"
+    total_expression = "0"
+    update_current_label()
+    update_total_label()
 
-def entry(btn_text):
-    if output.cget("text") == "0":
-        output.config(text=btn_text)
-    elif btn_text in '+-*/' and output.cget("text")[-1] in '+-*/':
-        new_text = output.cget("text")[:-1] + btn_text
-        output.config(text=new_text)
-    else:
-        output.config(text=output.cget("text") + btn_text)
-    output.update()
+def evaluate():
+    global total_expression, current_expression
+    total_expression += current_expression
+    update_total_label()
 
-def btn(char):
-    entry(str(char))
+    try:
+        current_expression = str(eval(total_expression))
 
-def btn_equal():
-    if output.cget("text")[-1] in '+-*/':
-        pass
-    else:
-        output.config(text=str(eval(output.cget("text"))))
-        output.update()
+        total_expression = "0"
 
+    except Exception as e:
+        current_expression = "Error"
+    finally:
+        update_current_label()
 
-# Calculator button
-btn_1 = Button(digit_frame, text="1", font=("Arial", 14), padx=40, pady=20, command=lambda: btn(1))
-btn_2 = Button(digit_frame, text="2", font=("Arial", 14), padx=40, pady=20, command=lambda: btn(2))
-btn_3 = Button(digit_frame, text="3", font=("Arial", 14), padx=40, pady=20, command=lambda: btn(3))
-btn_4 = Button(digit_frame, text="4", font=("Arial", 14), padx=40, pady=20, command=lambda: btn(4))
-btn_5 = Button(digit_frame, text="5", font=("Arial", 14), padx=40, pady=20, command=lambda: btn(5))
-btn_6 = Button(digit_frame, text="6", font=("Arial", 14), padx=40, pady=20, command=lambda: btn(6))
-btn_7 = Button(digit_frame, text="7", font=("Arial", 14), padx=40, pady=20, command=lambda: btn(7))
-btn_8 = Button(digit_frame, text="8", font=("Arial", 14), padx=40, pady=20, command=lambda: btn(8))
-btn_9 = Button(digit_frame, text="9", font=("Arial", 14), padx=40, pady=20, command=lambda: btn(9))
-btn_0 = Button(digit_frame, text="0", font=("Arial", 14), padx=95, pady=20, command=lambda: btn(0))
-btn_add = Button(digit_frame, text="+", font=("Arial", 14), padx=39, pady=60, command=lambda: btn('+'))
-btn_sub = Button(digit_frame, text="-", font=("Arial", 14), padx=40, pady=20, command=lambda: btn('-'))
-btn_mul = Button(digit_frame, text="*", font=("Arial", 14), padx=42, pady=20, command=lambda: btn('*'))
-btn_div = Button(digit_frame, text="/", font=("Arial", 14), padx=42, pady=20, command=lambda: btn('/'))
-btn_equal = Button(digit_frame, text="=", font=("Arial", 14), padx=39, pady=60, command=btn_equal)
-btn_clear = Button(digit_frame, text="Clear", font=("Arial", 14), padx=20, pady=20, command=clear)
-btn_quit = Button(digit_frame, text="Quit", font=("Arial", 14), padx=30, pady=20, command=root.quit)
+digits = {
+    7:(1,1), 8:(1,2), 9:(1,3),
+    4:(2,1), 5:(2,2), 6:(2,3),
+    1:(3,1), 2:(3,2), 3:(3,3),
+    0:(4,1), '.':(4,2)
+}
 
+operations = {
+    "/": "/", 
+    "*": "x",
+    "-": "-",
+    "+": "+"
+}
 
-# placing the buttons
-output.grid(row=0, column=0, columnspan=4)
-btn_1.grid(row=4, column=0)
-btn_2.grid(row=4, column=1)
-btn_3.grid(row=4, column=2)
-btn_4.grid(row=3, column=0)
-btn_5.grid(row=3, column=1)
-btn_6.grid(row=3, column=2)
-btn_7.grid(row=2, column=0)
-btn_8.grid(row=2, column=1)
-btn_9.grid(row=2, column=2)
-btn_0.grid(row=5, column=0, columnspan=2)
-btn_add.grid(row=2, column=3, rowspan=2)
-btn_sub.grid(row=1, column=3)
-btn_mul.grid(row=1, column=2)
-btn_div.grid(row=1, column=1)
-btn_equal.grid(row=4, column=3, rowspan=2)
-btn_clear.grid(row=5, column=2)
-btn_quit.grid(row=1, column=0)
+for digit, grid_value in digits.items():
+    button = tk.Button(digit_frame, text=str(digit), bg=WHITE, fg=LABEL_COLOR, font=DIGIT_FONT_STYLE, borderwidth=0, command=lambda x=digit:add_to_expression(x))
+    button.grid(row=grid_value[0], column=grid_value[1], sticky=tk.NSEW)
+
+i=0
+
+for operator, symbol in operations.items():
+    button = tk.Button(digit_frame, text=symbol, bg=OFF_WHITE, fg=LABEL_COLOR, font=DEFAULT_FONT_STYLE, borderwidth=0, command=lambda x=operator:append_operator(x))
+    button.grid(row=i, column=4, sticky=tk.NSEW)
+    i += 1
+
+clear = tk.Button(digit_frame, text='C', bg=OFF_WHITE, fg=LABEL_COLOR, font=DEFAULT_FONT_STYLE, borderwidth=0, command=clear)
+clear.grid(row=0, column=1, sticky=tk.NSEW, columnspan=3)
+
+equal = tk.Button(digit_frame, text='=', bg=LIGHT_BLUE, fg=LABEL_COLOR, font=DEFAULT_FONT_STYLE, borderwidth=0, command=evaluate)
+equal.grid(row=4, column=3, sticky=tk.NSEW, columnspan=2)
+
+#binding keys
+root.bind("<Return>", lambda event: evaluate())
+
+for key in digits:
+    root.bind(str(key), lambda event,digit=key: add_to_expression(digit))
+
+for key in operations:
+    root.bind(key, lambda event,operator=key: append_operator(operator))
 
 
 root.mainloop()
